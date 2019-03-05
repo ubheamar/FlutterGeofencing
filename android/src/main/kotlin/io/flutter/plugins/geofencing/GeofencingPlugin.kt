@@ -12,10 +12,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
-import com.google.android.gms.location.Geofence
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.GeofencingRequest
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.*
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
@@ -23,11 +20,14 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.CacheRequest
 
 class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandler {
     private val mContext = context
     private val mActivity = activity
     private val mGeofencingClient = LocationServices.getGeofencingClient(mContext)
+    private var mLocationRequest:LocationRequest? = null
+    private val mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(mContext);
 
     companion object {
         @JvmStatic
@@ -46,6 +46,8 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         @JvmStatic
         private val sGeofenceCacheLock = Object()
+
+
 
         @JvmStatic
         fun registerWith(registrar: Registrar) {
@@ -124,6 +126,9 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
                 }
             }
         }
+
+
+
 
         @JvmStatic
         private fun addGeofenceToCache(context: Context, id: String, args: ArrayList<*>) {
@@ -221,16 +226,33 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
                 initializeService(mContext, args)
                 result.success(true)
             }
-            "GeofencingPlugin.registerGeofence" -> registerGeofence(mContext,
-                                                                    mGeofencingClient,
-                                                                    args,
-                                                                    result,
-                                                                    true)
-            "GeofencingPlugin.removeGeofence" -> removeGeofence(mContext,
-                                                                mGeofencingClient,
-                                                                args,
-                                                                result)
+            "GeofencingPlugin.registerGeofence" -> {
+                startLocationUpdates()
+                registerGeofence(mContext, mGeofencingClient, args, result, true)}
+            "GeofencingPlugin.removeGeofence" ->{
+                mFusedLocationProviderClient.removeLocationUpdates(getBackgroundLocationPendingIntent())
+                removeGeofence(mContext, mGeofencingClient, args, result)}
             else -> result.notImplemented()
         }
     }
+    fun startLocationUpdates(){
+        buildLocationRequest()
+        mFusedLocationProviderClient.requestLocationUpdates(mLocationRequest,getBackgroundLocationPendingIntent())
+    }
+
+    private fun getBackgroundLocationPendingIntent(): PendingIntent {
+        val intent = Intent(mContext,LocationBroadcastReceiver::class.java)
+        intent.action = LocationBroadcastReceiver.ACTION_PROCESS_UPDATE
+        return PendingIntent.getBroadcast(mContext,0,intent,PendingIntent.FLAG_UPDATE_CURRENT)
+    }
+
+    fun buildLocationRequest(){
+        mLocationRequest = LocationRequest();
+        mLocationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        mLocationRequest?.interval = 5000
+        mLocationRequest?.fastestInterval =3000
+        mLocationRequest?.smallestDisplacement = 10f
+
+    }
+
 }
