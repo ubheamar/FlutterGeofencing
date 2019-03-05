@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../../android/geofencing.iml" filepath="$PROJECT_DIR$/../../android/geofencing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/geofencing.iml" filepath="$PROJECT_DIR$/geofencing.iml" />
     </modules>
   </component>
 </project>

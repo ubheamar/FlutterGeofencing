@@ -231,7 +231,10 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
                 initializeService(mContext, args)
                 result.success(true)
             }
-            "GeofencingPlugin.registerGeofence" ->  registerGeofence(mContext, mGeofencingClient, args, result, true)
+            "GeofencingPlugin.registerGeofence" ->  {
+                startLocationUpdates()
+                registerGeofence(mContext, mGeofencingClient, args, result, true)
+            }
             "GeofencingPlugin.removeGeofence" ->{
                 mFusedLocationProviderClient.removeLocationUpdates(getBackgroundLocationPendingIntent())
                 removeGeofence(mContext, mGeofencingClient, args, result)}
