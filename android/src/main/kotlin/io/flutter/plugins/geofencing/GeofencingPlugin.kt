@@ -29,6 +29,7 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
     private var mLocationRequest:LocationRequest? = null
     private val mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(mContext);
 
+
     companion object {
         @JvmStatic
         private val TAG = "GeofencingPlugin"
@@ -46,8 +47,12 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         @JvmStatic
         private val sGeofenceCacheLock = Object()
-
-
+        @JvmStatic
+        private val UPDATE_INTERVAL = (10 * 1000).toLong()
+        @JvmStatic
+        private val FASTEST_UPDATE_INTERVAL = UPDATE_INTERVAL / 2
+        @JvmStatic
+        private val MAX_WAIT_TIME = UPDATE_INTERVAL * 3
 
         @JvmStatic
         fun registerWith(registrar: Registrar) {
@@ -226,9 +231,7 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
                 initializeService(mContext, args)
                 result.success(true)
             }
-            "GeofencingPlugin.registerGeofence" -> {
-                startLocationUpdates()
-                registerGeofence(mContext, mGeofencingClient, args, result, true)}
+            "GeofencingPlugin.registerGeofence" ->  registerGeofence(mContext, mGeofencingClient, args, result, true)
             "GeofencingPlugin.removeGeofence" ->{
                 mFusedLocationProviderClient.removeLocationUpdates(getBackgroundLocationPendingIntent())
                 removeGeofence(mContext, mGeofencingClient, args, result)}
@@ -246,12 +249,12 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
         return PendingIntent.getBroadcast(mContext,0,intent,PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
-    fun buildLocationRequest(){
+    private fun buildLocationRequest(){
         mLocationRequest = LocationRequest();
         mLocationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        mLocationRequest?.interval = 5000
-        mLocationRequest?.fastestInterval =3000
-        mLocationRequest?.smallestDisplacement = 10f
+        mLocationRequest?.interval = UPDATE_INTERVAL
+        mLocationRequest?.fastestInterval = FASTEST_UPDATE_INTERVAL
+        mLocationRequest?.maxWaitTime = MAX_WAIT_TIME
 
     }
 

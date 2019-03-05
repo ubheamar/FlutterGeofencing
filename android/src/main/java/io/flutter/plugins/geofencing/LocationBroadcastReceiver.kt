@@ -11,7 +11,7 @@ import com.google.android.gms.location.LocationResult
 
 class LocationBroadcastReceiver : BroadcastReceiver() {
     companion object {
-        val ACTION_PROCESS_UPDATE = "io.flutter.plugin.geofencing.UPDATE_LOCATION"
+        val ACTION_PROCESS_UPDATE = "io.flutter.plugin.geofencing.action.UPDATE_LOCATION"
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {

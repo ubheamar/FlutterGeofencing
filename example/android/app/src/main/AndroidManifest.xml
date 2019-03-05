@@ -37,12 +37,14 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
         <receiver android:name="io.flutter.plugins.geofencing.GeofencingBroadcastReceiver"
             android:enabled="true" android:exported="true"/>
+
         <receiver android:name="io.flutter.plugins.geofencing.GeofencingRebootBroadcastReceiver"
-                  android:enabled="true">
+            android:enabled="true">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"></action>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
         <service android:name="io.flutter.plugins.geofencing.GeofencingService"

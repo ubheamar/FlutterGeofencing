@@ -18,8 +18,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String geofenceState = 'N/A';
-  double latitude = 37.419851;
-  double longitude = -122.078818;
+  double latitude = 23.5864;
+  double longitude = 58.4224;
   double radius = 150.0;
   ReceivePort port = ReceivePort();
   final List<GeofenceEvent> triggers = <GeofenceEvent>[
