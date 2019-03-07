@@ -114,6 +114,15 @@ class _MyAppState extends State<MyApp> {
                           onPressed: () =>
                               GeofencingManager.removeGeofenceById('mtv')),
                     ),
+                    Center(
+                      child: RaisedButton(
+                          child: const Text('Current Location'),
+                          onPressed: () async {
+                            Location location =
+                                await GeofencingManager.getCurrentLocation();
+                            print('Current Location : $location');
+                          }),
+                    ),
                     TextField(
                       decoration: const InputDecoration(
                         hintText: 'Latitude',

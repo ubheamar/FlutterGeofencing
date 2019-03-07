@@ -7,7 +7,6 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/services.dart';
-
 import 'package:geofencing/src/callback_dispatcher.dart';
 import 'package:geofencing/src/location.dart';
 import 'package:geofencing/src/platform_settings.dart';
@@ -147,6 +146,18 @@ class GeofencingManager {
     ];
     args.addAll(region._toArgs());
     await _channel.invokeMethod('GeofencingPlugin.registerGeofence', args);
+  }
+
+  ///Get Current Location
+  ///
+  static Future<Location> getCurrentLocation() async {
+    final List<dynamic> args =
+        await _channel.invokeMethod('GeofencingPlugin.getCurrentLocation');
+    final List<double> locationList = <double>[];
+    args.forEach((dynamic e) => locationList.add(double.parse(e.toString())));
+    final Location triggeringLocation = locationFromList(locationList);
+    print('Current Location : $triggeringLocation');
+    return triggeringLocation;
   }
 
   /// Stop receiving geofence events for a given [GeofenceRegion].

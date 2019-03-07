@@ -231,6 +231,17 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
                 initializeService(mContext, args)
                 result.success(true)
             }
+            "GeofencingPlugin.getCurrentLocation" ->  {
+                startLocationUpdates()
+                mFusedLocationProviderClient.lastLocation.run {
+                    addOnSuccessListener {
+                        val locationList = listOf(it.latitude, it.longitude)
+                        result.success(locationList)
+                }
+                    addOnFailureListener {
+                    result.error(it.message,null,null);
+                }}
+            }
             "GeofencingPlugin.registerGeofence" ->  {
                 startLocationUpdates()
                 registerGeofence(mContext, mGeofencingClient, args, result, true)
