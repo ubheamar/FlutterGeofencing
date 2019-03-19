@@ -56,6 +56,7 @@ class LocationService : MethodCallHandler, JobIntentService() {
 
         @JvmStatic
         public val dateFormatter = SimpleDateFormat("dd-MM-yyyy")
+
         @JvmStatic
         fun enqueueWork(context: Context, work: Intent) {
             enqueueWork(context, LocationService::class.java, JOB_ID, work)
@@ -100,8 +101,8 @@ class LocationService : MethodCallHandler, JobIntentService() {
         mBackgroundChannel.setMethodCallHandler(this)
     }
 
-   override fun onMethodCall(call: MethodCall, result: Result) {
-       when(call.method) {
+    override fun onMethodCall(call: MethodCall, result: Result) {
+        when (call.method) {
             "GeofencingService.initialized" -> {
                 synchronized(sServiceStarted) {
                     while (!queue.isEmpty()) {
@@ -117,14 +118,23 @@ class LocationService : MethodCallHandler, JobIntentService() {
             }
             "GeofencingService.demoteToBackground" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val intent = Intent(mContext, IsolateHolderService::class.java)
-                intent.setAction(IsolateHolderService.ACTION_SHUTDOWN)
+                    val intent = Intent(mContext, IsolateHolderService::class.java)
+                    intent.setAction(IsolateHolderService.ACTION_SHUTDOWN)
                     mContext.startForegroundService(intent)
                 }
             }
             else -> result.notImplemented()
         }
         result.success(null)
+    }
+
+    private fun isMarkerInsideCircle(centerLat: Double, centerLng: Double, draggedLat: Double, draggedLng: Double, radius: Double): Boolean {
+        val distances = FloatArray(1)
+        Location.distanceBetween(centerLat,
+                centerLng,
+                draggedLat,
+                draggedLng, distances)
+        return radius > distances[0]
     }
 
     override fun onCreate() {
@@ -134,35 +144,35 @@ class LocationService : MethodCallHandler, JobIntentService() {
 
     override fun onHandleWork(intent: Intent) {
         val p = mContext.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
-        val lastAttendanceDate = p.getString(LAST_ATTENDANCE_KEY,"")
+        val lastAttendanceDate = p.getString(LAST_ATTENDANCE_KEY, "")
         Log.i(TAG, "Last Attendance Date : $lastAttendanceDate")
-        if(lastAttendanceDate.isNullOrEmpty() && lastAttendanceDate!= dateFormatter.format(Date())) {
-        val callbackHandle = p.getLong(GeofencingPlugin.CALLBACK_HANDLE_KEY, 0)
-        val result = LocationResult.extractResult(intent)
-        Log.i(TAG,"Location result fetching for Location Service")
-        if(result!=null){
-            val location = result.lastLocation;
-            Log.i(TAG,"Android location trigger : location :[ "+ location.latitude +","+location.longitude+"] ")
-            p.edit().putString(LAST_LOCATION_LAT_KEY,location.latitude.toString()).apply()
-            p.edit().putString(LAST_LOCATION_LONG_KEY,location.longitude.toString()).apply()
-            val geoLat =  p.getString(GEO_LOCATION_LAT_KEY,"0").toDouble()
-            val geoLong =  p.getString(GEO_LOCATION_LAT_KEY,"0").toDouble()
-            val locationResults = FloatArray(1)
-            val geoRad =  p.getString(GEO_LOCATION_RAD_KEY,"0").toDouble()
-            Location.distanceBetween(geoLat,geoLong,location.latitude,location.longitude,locationResults)
-                val locationList = listOf(location.latitude,
-                        location.longitude)
-                val geofenceUpdateList = listOf(callbackHandle,
-                        listOf("mtv"),
-                        locationList,
-                        1)
-                synchronized(sServiceStarted) {
-                    if (!sServiceStarted.get()) {
-                        // Queue up geofencing events while background isolate is starting
-                        queue.add(geofenceUpdateList)
-                    } else {
-                        // Callback method name is intentionally left blank.
-                        mBackgroundChannel.invokeMethod("", geofenceUpdateList)
+        if (lastAttendanceDate.isNullOrEmpty() && lastAttendanceDate != dateFormatter.format(Date())) {
+            val callbackHandle = p.getLong(GeofencingPlugin.CALLBACK_HANDLE_KEY, 0)
+            val result = LocationResult.extractResult(intent)
+            Log.i(TAG, "Location result fetching for Location Service")
+            if (result != null) {
+                val location = result.lastLocation;
+                Log.i(TAG, "Android location trigger : location :[ " + location.latitude + "," + location.longitude + "] ")
+                p.edit().putString(LAST_LOCATION_LAT_KEY, location.latitude.toString()).apply()
+                p.edit().putString(LAST_LOCATION_LONG_KEY, location.longitude.toString()).apply()
+                val geoLat = p.getString(GEO_LOCATION_LAT_KEY, "0").toDouble()
+                val geoLong = p.getString(GEO_LOCATION_LAT_KEY, "0").toDouble()
+                val geoRad = p.getString(GEO_LOCATION_RAD_KEY, "0").toDouble()
+                if (isMarkerInsideCircle(geoLat, geoLong, location.latitude, location.longitude, geoRad)) {
+                    val locationList = listOf(location.latitude,
+                            location.longitude)
+                    val geofenceUpdateList = listOf(callbackHandle,
+                            listOf("mtv"),
+                            locationList,
+                            1)
+                    synchronized(sServiceStarted) {
+                        if (!sServiceStarted.get()) {
+                            // Queue up geofencing events while background isolate is starting
+                            queue.add(geofenceUpdateList)
+                        } else {
+                            // Callback method name is intentionally left blank.
+                            mBackgroundChannel.invokeMethod("", geofenceUpdateList)
+                        }
                     }
                 }
             }
