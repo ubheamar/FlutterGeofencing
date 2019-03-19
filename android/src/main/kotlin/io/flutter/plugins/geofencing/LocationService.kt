@@ -154,11 +154,11 @@ class LocationService : MethodCallHandler, JobIntentService() {
             if (result != null) {
                 val location = result.lastLocation;
                 Log.i(TAG, "Android location trigger : location :[ " + location.latitude + "," + location.longitude + "] ")
-                p.edit().putString(LAST_LOCATION_LAT_KEY, location.latitude.toString()).apply()
-                p.edit().putString(LAST_LOCATION_LONG_KEY, location.longitude.toString()).apply()
-                val geoLat = p.getString(GEO_LOCATION_LAT_KEY, "0").toDouble()
-                val geoLong = p.getString(GEO_LOCATION_LONG_KEY, "0").toDouble()
-                val geoRad = p.getString(GEO_LOCATION_RAD_KEY, "0").toDouble()
+              //  p.edit().putString(LAST_LOCATION_LAT_KEY, location.latitude.toString()).apply()
+              //  p.edit().putString(LAST_LOCATION_LONG_KEY, location.longitude.toString()).apply()
+                val geoLat = p.getString(GEO_LOCATION_LAT_KEY, "0.0")?.toDouble()!!
+                val geoLong = p.getString(GEO_LOCATION_LONG_KEY, "0.0")?.toDouble()!!
+                val geoRad = p.getString(GEO_LOCATION_RAD_KEY, "0.0")?.toDouble()!!
                 if (isMarkerInsideCircle(geoLat, geoLong, location.latitude, location.longitude, geoRad)) {
                     val locationList = listOf(location.latitude,
                             location.longitude)
