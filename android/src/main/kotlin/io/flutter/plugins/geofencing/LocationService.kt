@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.LocationResult
 import io.flutter.plugins.geofencing.GeofencingPlugin.Companion.GEO_LOCATION_LAT_KEY
+import io.flutter.plugins.geofencing.GeofencingPlugin.Companion.GEO_LOCATION_LONG_KEY
 import io.flutter.plugins.geofencing.GeofencingPlugin.Companion.GEO_LOCATION_RAD_KEY
 import io.flutter.plugins.geofencing.GeofencingPlugin.Companion.LAST_ATTENDANCE_KEY
 import io.flutter.plugins.geofencing.GeofencingPlugin.Companion.LAST_LOCATION_LAT_KEY
@@ -156,7 +157,7 @@ class LocationService : MethodCallHandler, JobIntentService() {
                 p.edit().putString(LAST_LOCATION_LAT_KEY, location.latitude.toString()).apply()
                 p.edit().putString(LAST_LOCATION_LONG_KEY, location.longitude.toString()).apply()
                 val geoLat = p.getString(GEO_LOCATION_LAT_KEY, "0").toDouble()
-                val geoLong = p.getString(GEO_LOCATION_LAT_KEY, "0").toDouble()
+                val geoLong = p.getString(GEO_LOCATION_LONG_KEY, "0").toDouble()
                 val geoRad = p.getString(GEO_LOCATION_RAD_KEY, "0").toDouble()
                 if (isMarkerInsideCircle(geoLat, geoLong, location.latitude, location.longitude, geoRad)) {
                     val locationList = listOf(location.latitude,
