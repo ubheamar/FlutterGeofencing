@@ -33,7 +33,8 @@ class _MyAppState extends State<MyApp> {
         GeofenceEvent.exit,
         GeofenceEvent.dwell
       ],
-      loiteringDelay: 1000 * 60);
+      loiteringDelay: 1000 * 60,
+      notificationResponsiveness: 1000 * 10);
 
   @override
   void initState() {
@@ -54,6 +55,11 @@ class _MyAppState extends State<MyApp> {
     final SendPort send =
         IsolateNameServer.lookupPortByName('geofencing_send_port');
     send?.send(e.toString());
+  }
+
+  static void locationcallback(
+      List<String> ids, Location l, GeofenceEvent e) async {
+    print('Location CallBack: $ids Location $l Event: $e');
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -122,6 +128,27 @@ class _MyAppState extends State<MyApp> {
                                 await GeofencingManager.getCurrentLocation();
                             print('Current Location : $location');
                           }),
+                    ),
+                    Center(
+                      child: RaisedButton(
+                        child: const Text('Register Location'),
+                        onPressed: () {
+                          if (latitude == null) {
+                            setState(() => latitude = 0.0);
+                          }
+                          if (longitude == null) {
+                            setState(() => longitude = 0.0);
+                          }
+                          if (radius == null) {
+                            setState(() => radius = 0.0);
+                          }
+                          GeofencingManager.registerLocation(
+                              GeofenceRegion(
+                                  'mtv', latitude, longitude, radius, triggers,
+                                  androidSettings: androidSettings),
+                              locationcallback);
+                        },
+                      ),
                     ),
                     TextField(
                       decoration: const InputDecoration(

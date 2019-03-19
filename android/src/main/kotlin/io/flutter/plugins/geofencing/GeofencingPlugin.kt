@@ -9,6 +9,7 @@ import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
@@ -21,6 +22,7 @@ import io.flutter.plugin.common.PluginRegistry.Registrar
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.CacheRequest
+import java.util.*
 
 class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandler {
     private val mContext = context
@@ -38,6 +40,18 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
         @JvmStatic
         val CALLBACK_HANDLE_KEY = "callback_handle"
         @JvmStatic
+        val LAST_LOCATION_LAT_KEY = "last_location_lat_key"
+        @JvmStatic
+        val LAST_LOCATION_LONG_KEY = "last_location_long_key"
+        @JvmStatic
+        val GEO_LOCATION_LAT_KEY = "geo_location_lat_key"
+        @JvmStatic
+        val GEO_LOCATION_LONG_KEY = "geo_location_long_key"
+        @JvmStatic
+        val GEO_LOCATION_RAD_KEY = "geo_location_rad_key"
+        @JvmStatic
+        val LAST_ATTENDANCE_KEY = "last_attendance_key"
+        @JvmStatic
         val CALLBACK_DISPATCHER_HANDLE_KEY = "callback_dispatch_handler"
         @JvmStatic
         val PERSISTENT_GEOFENCES_KEY = "persistent_geofences"
@@ -52,7 +66,7 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
         @JvmStatic
         private val FASTEST_UPDATE_INTERVAL = UPDATE_INTERVAL / 2
         @JvmStatic
-        private val MAX_WAIT_TIME = UPDATE_INTERVAL * 3
+        private val MAX_WAIT_TIME = UPDATE_INTERVAL * 2
 
         @JvmStatic
         fun registerWith(registrar: Registrar) {
@@ -157,7 +171,7 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
 
         @JvmStatic
         private fun initializeService(context: Context, args: ArrayList<*>?) {
-            Log.d(TAG, "Initializing GeofencingService")
+            Log.i(TAG, "Initializing GeofencingService")
             val callbackHandle = args!![0] as Long
             context.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
                     .edit()
@@ -178,6 +192,29 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
             val intent = Intent(context, GeofencingBroadcastReceiver::class.java)
                     .putExtra(CALLBACK_HANDLE_KEY, callbackHandle)
             return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
+        @JvmStatic
+        private fun registerLocation(context: Context, args: ArrayList<*>?, result: Result?, cache: Boolean)  {
+            //registerLocation
+            val callbackHandle = args!![0] as Long
+            val id = args[1] as String
+            val lat = args[2] as Double
+            val long = args[3] as Double
+            val radius = (args[4] as Number).toFloat()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                    (context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                            == PackageManager.PERMISSION_DENIED)) {
+                val msg = "'registerLocation' requires the ACCESS_FINE_LOCATION permission."
+                Log.i(TAG, msg)
+                result?.error(msg, null, null)
+            }
+           // addGeofenceToCache(context, id, args)
+            val p = context.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
+            p.edit().putLong(CALLBACK_HANDLE_KEY,callbackHandle).apply();
+            p.edit().putString(GEO_LOCATION_LAT_KEY,lat.toString()).apply();
+            p.edit().putString(GEO_LOCATION_LONG_KEY,long.toString()).apply();
+            p.edit().putString(GEO_LOCATION_RAD_KEY,radius.toString()).apply();
+            result?.success(true)
         }
 
         @JvmStatic
@@ -244,7 +281,26 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
             }
             "GeofencingPlugin.registerGeofence" ->  {
                 startLocationUpdates()
-                registerGeofence(mContext, mGeofencingClient, args, result, true)
+                registerGeofence(mContext, mGeofencingClient,  args, result, true)
+            }
+            "GeofencingPlugin.registerLocation" ->  {
+                registerLocation(mContext,  args, result, true)
+                startLocationUpdates()
+            }
+            "GeofencingPlugin.updateLastAttendance" ->  {
+                synchronized(sGeofenceCacheLock) {
+                    val p = mContext.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
+                    p.edit().putString(LAST_ATTENDANCE_KEY,LocationService.dateFormatter.format(Date())).apply()
+                    result.success(true)
+                }
+            }
+            "GeofencingPlugin.removeLocation" ->  {
+                mFusedLocationProviderClient.removeLocationUpdates(getBackgroundLocationPendingIntent())
+                val ids = listOf(args!![0] as String)
+                for (id in ids) {
+                    removeGeofenceFromCache(mContext, id)
+                }
+                result.success(true)
             }
             "GeofencingPlugin.removeGeofence" ->{
                 mFusedLocationProviderClient.removeLocationUpdates(getBackgroundLocationPendingIntent())
@@ -257,7 +313,7 @@ class GeofencingPlugin(context: Context, activity: Activity?) : MethodCallHandle
         mFusedLocationProviderClient.requestLocationUpdates(mLocationRequest,getBackgroundLocationPendingIntent())
     }
 
-    private fun getBackgroundLocationPendingIntent(): PendingIntent {
+    private fun getBackgroundLocationPendingIntent( ): PendingIntent {
         val intent = Intent(mContext,LocationBroadcastReceiver::class.java)
         intent.action = LocationBroadcastReceiver.ACTION_PROCESS_UPDATE
         return PendingIntent.getBroadcast(mContext,0,intent,PendingIntent.FLAG_UPDATE_CURRENT)

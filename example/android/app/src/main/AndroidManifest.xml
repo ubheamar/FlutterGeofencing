@@ -41,6 +41,12 @@
         <receiver android:name="io.flutter.plugins.geofencing.GeofencingBroadcastReceiver"
             android:enabled="true" android:exported="true"/>
 
+        <receiver android:name="io.flutter.plugins.geofencing.LocationBroadcastReceiver"
+            android:enabled="true" android:exported="true">
+            <intent-filter>
+                <action android:name="io.flutter.plugin.geofencing.action.UPDATE_LOCATION"/>
+            </intent-filter>
+        </receiver>
         <receiver android:name="io.flutter.plugins.geofencing.GeofencingRebootBroadcastReceiver"
             android:enabled="true">
             <intent-filter>
@@ -48,6 +54,8 @@
             </intent-filter>
         </receiver>
         <service android:name="io.flutter.plugins.geofencing.GeofencingService"
+            android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true"/>
+        <service android:name="io.flutter.plugins.geofencing.LocationService"
             android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true"/>
     </application>
 </manifest>

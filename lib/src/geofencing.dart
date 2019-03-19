@@ -148,6 +148,22 @@ class GeofencingManager {
     await _channel.invokeMethod('GeofencingPlugin.registerGeofence', args);
   }
 
+  static Future<void> registerLocation(
+      GeofenceRegion region,
+      void Function(List<String> id, Location location, GeofenceEvent event)
+          callback) async {
+    if (Platform.isIOS &&
+        region.triggers.contains(GeofenceEvent.dwell) &&
+        (region.triggers.length == 1)) {
+      throw UnsupportedError("iOS does not support 'GeofenceEvent.dwell'");
+    }
+    final List<dynamic> args = <dynamic>[
+      PluginUtilities.getCallbackHandle(callback).toRawHandle()
+    ];
+    args.addAll(region._toArgs());
+    await _channel.invokeMethod('GeofencingPlugin.registerLocation', args);
+  }
+
   ///Get Current Location
   ///
   static Future<Location> getCurrentLocation() async {

@@ -13,9 +13,10 @@ import io.flutter.view.FlutterMain
 
 class GeofencingBroadcastReceiver : BroadcastReceiver() {
     companion object {
-        private const val TAG = "GeofencingBroadcastReceiver"
+        private const val TAG = "GeofencingBroadcast"
     }
     override fun onReceive(context: Context, intent: Intent) {
+        Log.i(TAG,"Called GeofencingBroadcastReceiver")
         FlutterMain.ensureInitializationComplete(context, null)
         GeofencingService.enqueueWork(context, intent)
     }

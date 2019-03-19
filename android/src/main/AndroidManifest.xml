@@ -6,12 +6,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <application>
-        <!--<receiver android:name=".LocationBroadcastReceiver"
-            android:enabled="true" android:exported="true">
-            <intent-filter>
-                <action android:name="io.flutter.plugin.geofencing.action.UPDATE_LOCATION"/>
-            </intent-filter>
-        </receiver>-->
+
 
     </application>
 
