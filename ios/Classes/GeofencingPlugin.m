@@ -31,16 +31,15 @@ static BOOL initialized = NO;
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
     @synchronized(self) {
         if (instance == nil) {
+            NSLog(@"Registering with registrar");
             instance = [[GeofencingPlugin alloc] init:registrar];
             [registrar addApplicationDelegate:instance];
         }
     }
 }
-
 + (void)setPluginRegistrantCallback:(FlutterPluginRegistrantCallback)callback {
     registerPlugins = callback;
 }
-
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
     NSArray *arguments = call.arguments;
     if ([@"GeofencingPlugin.initializeService" isEqualToString:call.method]) {
@@ -54,6 +53,7 @@ static BOOL initialized = NO;
             // Send the geofence events that occurred while the background
             // isolate was initializing.
             while ([_eventQueue count] > 0) {
+                NSLog(@"DUMPING QUEUE");
                 NSDictionary* event = _eventQueue[0];
                 [_eventQueue removeObjectAtIndex:0];
                 CLRegion* region = [event objectForKey:kRegionKey];
@@ -87,6 +87,7 @@ didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 #pragma mark LocationManagerDelegate Methods
 - (void)locationManager:(CLLocationManager *)manager didEnterRegion:(CLRegion *)region {
     @synchronized(self) {
+        NSLog(@"Entered Location");
         if (initialized) {
             [self sendLocationEvent:region eventType:kEnterEvent];
         } else {
@@ -101,6 +102,7 @@ didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
 - (void)locationManager:(CLLocationManager *)manager didExitRegion:(CLRegion *)region {
     @synchronized(self) {
+        NSLog(@"Exited location");
         if (initialized) {
             [self sendLocationEvent:region eventType:kExitEvent];
         } else {
@@ -116,6 +118,7 @@ didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 - (void)locationManager:(CLLocationManager *)manager
 monitoringDidFailForRegion:(CLRegion *)region
               withError:(NSError *)error {
+    NSLog(@"Monitoring error %@", error);
 }
 
 #pragma mark GeofencingPlugin Methods
@@ -141,7 +144,7 @@ monitoringDidFailForRegion:(CLRegion *)region
     [_locationManager requestAlwaysAuthorization];
     _locationManager.allowsBackgroundLocationUpdates = YES;
     
-    _headlessRunner = [[FlutterEngine alloc] initWithName:@"GeofencingIsolate" project:nil allowHeadlessExecution:YES];
+    _headlessRunner = [[FlutterEngine alloc] initWithName:@"geofencing_plugin" project:nil];
     _registrar = registrar;
     
     _mainChannel = [FlutterMethodChannel methodChannelWithName:@"plugins.flutter.io/geofencing_plugin"
@@ -155,14 +158,14 @@ monitoringDidFailForRegion:(CLRegion *)region
 }
 
 - (void)startGeofencingService:(int64_t)handle {
+    NSLog(@"Initializing GeofencingService");
     [self setCallbackDispatcherHandle:handle];
     FlutterCallbackInformation *info = [FlutterCallbackCache lookupCallbackInformation:handle];
     NSAssert(info != nil, @"failed to find callback");
     NSString *entrypoint = info.callbackName;
     NSString *uri = info.callbackLibraryPath;
     [_headlessRunner runWithEntrypoint:entrypoint libraryURI:uri];
-    NSAssert(registerPlugins != nil, @"failed to set registerPlugins");
-    
+     NSAssert(registerPlugins != nil, @"failed to set registerPlugins");
     // Once our headless runner has been started, we need to register the application's plugins
     // with the runner in order for them to work on the background isolate. `registerPlugins` is
     // a callback set from AppDelegate.m in the main application. This callback should register
@@ -172,6 +175,7 @@ monitoringDidFailForRegion:(CLRegion *)region
 }
 
 - (void)registerGeofence:(NSArray *)arguments {
+    NSLog(@"RegisterGeofence: %@", arguments);
     int64_t callbackHandle = [arguments[0] longLongValue];
     NSString *identifier = arguments[1];
     double latitude = [arguments[2] doubleValue];
@@ -191,6 +195,7 @@ monitoringDidFailForRegion:(CLRegion *)region
 }
 
 - (BOOL)removeGeofence:(NSArray *)arguments {
+    NSLog(@"RemoveGeofence: %@", arguments);
     NSString *identifier = arguments[0];
     for (CLRegion *region in [self->_locationManager monitoredRegions]) {
         if ([region.identifier isEqual:identifier]) {
