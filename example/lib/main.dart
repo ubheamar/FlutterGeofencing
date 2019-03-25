@@ -4,10 +4,37 @@
 
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geofencing/geofencing.dart';
+
+
+
+void showNotification(
+    String message, FlutterLocalNotificationsPlugin notification) {
+  var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
+      'touch_app_id', 'Touch App', 'Touch App Description',
+      importance: Importance.Max, priority: Priority.High);
+  var iOSPlatformChannelSpecifics = new IOSNotificationDetails();
+  NotificationDetails notificationDetails = NotificationDetails(
+      androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
+  notification.show(Random(100).nextInt(100), "Touch App", message, notificationDetails);
+}
+
+FlutterLocalNotificationsPlugin initialisedNotification() {
+  var initializationSettingsAndroid = AndroidInitializationSettings('app_logo');
+  var initializationSettingsIOS = IOSInitializationSettings();
+  var initializationSettings = InitializationSettings(
+      initializationSettingsAndroid, initializationSettingsIOS);
+  var flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  return flutterLocalNotificationsPlugin;
+}
+
+
 
 void main() => runApp(MyApp());
 
@@ -51,6 +78,8 @@ class _MyAppState extends State<MyApp> {
 
   static void callback(List<String> ids, Location l, GeofenceEvent e) async {
     print('Fences: $ids Location $l Event: $e');
+    FlutterLocalNotificationsPlugin notification = initialisedNotification();
+    showNotification("Hello", notification);
     final SendPort send =
         IsolateNameServer.lookupPortByName('geofencing_send_port');
     send?.send(e.toString());
