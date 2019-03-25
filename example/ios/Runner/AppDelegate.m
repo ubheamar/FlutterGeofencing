@@ -3,9 +3,6 @@
 
 #import <geofencing/GeofencingPlugin.h>
 
-void registerPlugins(NSObject<FlutterPluginRegistry>* registry) {
-  [GeneratedPluginRegistrant registerWithRegistry:registry];
-}
 
 @implementation AppDelegate
 
@@ -13,7 +10,7 @@ void registerPlugins(NSObject<FlutterPluginRegistry>* registry) {
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   [GeneratedPluginRegistrant registerWithRegistry:self];
 
- [GeofencingPlugin setPluginRegistrantCallback:registerPlugins];
+
 
   // Override point for customization after application launch.
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
