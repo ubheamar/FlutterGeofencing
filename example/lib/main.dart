@@ -7,6 +7,7 @@ import 'dart:isolate';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geofencing/geofencing.dart';
@@ -79,7 +80,18 @@ class _MyAppState extends State<MyApp> {
   static void callback(List<String> ids, Location l, GeofenceEvent e) async {
     print('Fences: $ids Location $l Event: $e');
     FlutterLocalNotificationsPlugin notification = initialisedNotification();
+   // await GeofencingManager.marketAttendance();
     showNotification("Hello", notification);
+    /*try {
+      Response response = await Dio().get("http://www.google.com");
+      showNotification("Hello", notification);
+      print(response);
+    } catch (e) {
+      print(e);
+      showNotification("Error", notification);
+    }
+*/
+   // await GeofencingManager.marketAttendance();
     final SendPort send =
         IsolateNameServer.lookupPortByName('geofencing_send_port');
     send?.send(e.toString());

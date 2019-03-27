@@ -67,7 +67,10 @@ static BOOL initialized = NO;
         result(@(YES));
     } else if ([@"GeofencingPlugin.removeGeofence" isEqualToString:call.method]) {
         result(@([self removeGeofence:arguments]));
-    } else {
+    } else if ([@"GeofencingService.marketAttendance" isEqualToString:call.method]) {
+        result([self marketAttendance:arguments]);
+    }
+    else {
         result(FlutterMethodNotImplemented);
     }
 }
@@ -88,6 +91,8 @@ didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 - (void)locationManager:(CLLocationManager *)manager didEnterRegion:(CLRegion *)region {
     @synchronized(self) {
         NSLog(@"Entered Location");
+       // [self markAttendance:region];
+        
         if (initialized) {
             [self sendLocationEvent:region eventType:kEnterEvent];
         } else {
@@ -98,6 +103,24 @@ didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
             [_eventQueue addObject:dict];
         }
     }
+}
+
+-(void)markAttendance:(CLRegion *)region{
+    NSError *error;
+    
+    // Create the URLSession on the default configuration
+    NSURLSessionConfiguration *defaultSessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
+    NSURLSession *defaultSession = [NSURLSession sessionWithConfiguration:defaultSessionConfiguration];
+    // Setup the request with URL
+    NSURL *url = [NSURL URLWithString:@"https://www.google.com"];
+    NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:url];
+    // Convert POST string parameters to data using UTF8 Encoding
+    [urlRequest setHTTPMethod:@"GET"];
+    NSURLSessionDataTask *postDataTask = [defaultSession dataTaskWithRequest:urlRequest completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+         if (error==nil) {
+         }
+    }];
+    [postDataTask resume];
 }
 
 - (void)locationManager:(CLLocationManager *)manager didExitRegion:(CLRegion *)region {
@@ -205,6 +228,71 @@ monitoringDidFailForRegion:(CLRegion *)region
         }
     }
     return NO;
+}
+- (NSString*)marketAttendance:(NSArray *)arguments {
+    UIBackgroundTaskIdentifier bgTask = UIBackgroundTaskInvalid;
+    bgTask = [[UIApplication sharedApplication]
+              beginBackgroundTaskWithExpirationHandler:^{
+                  [[UIApplication sharedApplication] endBackgroundTask:bgTask];
+              }];
+    
+    NSString *url = @"http://www.google.com";
+   // NSURLSessionConfiguration *defaultSessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
+   // NSURLSession *defaultSession = [NSURLSession sessionWithConfiguration:defaultSessionConfiguration];
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+    [request setHTTPMethod:@"GET"];
+    [request setURL:[NSURL URLWithString:url]];
+    NSError *error = nil;
+    NSURLResponse *response = nil;
+   /* NSURLSession *defaultSession = [NSURLSession sharedSession];
+    NSURLSessionDataTask *postDataTask = [defaultSession dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response){
+        NSLog(@"Post request successfully");
+        return error;
+    }];
+    [postDataTask resume];*/
+    NSData *responseData =  [self sendSynchronousRequest:request returningResponse:&response error:&error];
+    //[self sendSynchronousRequest:request and response];
+    NSLog(@"Post request submitted");
+    if (bgTask != UIBackgroundTaskInvalid)
+    {
+        [[UIApplication sharedApplication] endBackgroundTask:bgTask];
+    }
+    //RESPONDE DATA
+   /* NSData *oResponseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&responseCode error:&error];
+    
+    if([responseCode statusCode] != 200){
+        NSLog(@"Error getting %@, HTTP status code %li", url, (long)[responseCode statusCode]);
+        return @"Error requesting url";
+    }*/
+                                         return @"";
+}
+- (NSData *)sendSynchronousRequest:(NSURLRequest *)request
+                 returningResponse:(__autoreleasing NSURLResponse **)responsePtr
+                             error:(__autoreleasing NSError **)errorPtr {
+    dispatch_semaphore_t    sem;
+    __block NSData *        result;
+    
+    result = nil;
+    
+    sem = dispatch_semaphore_create(0);
+    
+    [[[NSURLSession sharedSession] dataTaskWithRequest:request
+                                     completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                                         if (errorPtr != NULL) {
+                                             *errorPtr = error;
+                                         }
+                                         if (responsePtr != NULL) {
+                                             *responsePtr = response;
+                                         }
+                                         if (error == nil) {
+                                             result = data;
+                                         }
+                                         dispatch_semaphore_signal(sem);
+                                     }] resume];
+    
+    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+    
+    return result;
 }
 
 - (int64_t)getCallbackDispatcherHandle {
