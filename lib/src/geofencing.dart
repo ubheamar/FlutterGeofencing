@@ -147,10 +147,6 @@ class GeofencingManager {
     args.addAll(region._toArgs());
     await _channel.invokeMethod('GeofencingPlugin.registerGeofence', args);
   }
-  static Future<String> marketAttendance(/*String url,String payload,String username,String password*/)async {
-    final List<dynamic> args = [];
-    return  await _background.invokeMethod('GeofencingService.marketAttendance', args);
-  }
   ///Get Current Location
   ///
   static Future<Location> getCurrentLocation() async {

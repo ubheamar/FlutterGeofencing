@@ -20,6 +20,6 @@ typedef void (*FlutterPluginRegistrantCallback)(NSObject<FlutterPluginRegistry>*
 @interface GeofencingPlugin : NSObject<FlutterPlugin, CLLocationManagerDelegate>
 
 + (void)setPluginRegistrantCallback:(FlutterPluginRegistrantCallback)callback;
-//+ (NSData)sendSynchronousRequest:(NSURLRequest)request;
+
 
 @end
