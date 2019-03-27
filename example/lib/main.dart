@@ -80,17 +80,20 @@ class _MyAppState extends State<MyApp> {
   static void callback(List<String> ids, Location l, GeofenceEvent e) async {
     print('Fences: $ids Location $l Event: $e');
     FlutterLocalNotificationsPlugin notification = initialisedNotification();
-    await GeofencingManager.marketAttendance();
-    showNotification("Hello", notification);
-    /*try {
+
+  //  await GeofencingManager.marketAttendance();
+   // showNotification("Hello", notification);
+    try {
       Response response = await Dio().get("http://www.google.com");
       showNotification("Hello", notification);
+    //  Response response = await Dio().get("http://www.google.com");
+
       print(response);
     } catch (e) {
       print(e);
       showNotification("Error", notification);
     }
-*/
+
    // await GeofencingManager.marketAttendance();
     final SendPort send =
         IsolateNameServer.lookupPortByName('geofencing_send_port');
