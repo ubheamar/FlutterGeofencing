@@ -163,8 +163,8 @@ monitoringDidFailForRegion:(CLRegion *)region
     _locationManager = [[CLLocationManager alloc] init];
     [_locationManager setDelegate:self];
     [_locationManager requestAlwaysAuthorization];
-    _locationManager.allowsBackgroundLocationUpdates = YES;
-    _locationManager.pausesLocationUpdatesAutomatically = false;
+    [_locationManager allowsBackgroundLocationUpdates:YES];
+    [_locationManager pausesLocationUpdatesAutomatically:YES];
     
     _headlessRunner = [[FlutterEngine alloc] initWithName:@"geofencing_plugin" project:nil];
     _registrar = registrar;
